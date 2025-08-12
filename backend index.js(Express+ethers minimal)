@@ -1,0 +1,68 @@
+ // backend/index.js
+require('dotenv').config();
+const express = require('express');
+const { ethers } = require('ethers');
+const bodyParser = require('body-parser');
+
+const app = express();
+app.use(bodyParser.json());
+
+const RPC = process.env.RPC_URL || 'http://127.0.0.1:8545';
+const PRIVATE_KEY = process.env.PRIVATE_KEY || '';
+const TOKENSTORE = process.env.TOKENSTORE_ADDRESS;
+const PLAYGAME = process.env.PLAYGAME_ADDRESS;
+
+const provider = new ethers.providers.JsonRpcProvider(RPC);
+const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+
+const tokenStoreAbi = [
+  'function buy(uint256 usdtAmount) external',
+  'event Purchased(address indexed buyer, uint256 usdtAmount, uint256 gtAmount)'
+];
+
+const playAbi = [
+  'function createMatch(address p1, address p2, uint256 stake) external returns (uint256)',
+  'function stakeMatch(uint256 matchId) external',
+  'function commitResult(uint256 matchId, address winner) external'
+];
+
+const tokenStore = new ethers.Contract(TOKENSTORE, tokenStoreAbi, wallet);
+const play = new ethers.Contract(PLAYGAME, playAbi, wallet);
+
+app.get('/purchase', async (req, res) => {
+  const amount = req.query.amount;
+  if (!amount) return res.status(400).send({ error: 'amount required' });
+  try {
+    const tx = await tokenStore.buy(ethers.BigNumber.from(amount));
+    const receipt = await tx.wait();
+    res.send({ txHash: receipt.transactionHash });
+  } catch (e) {
+    res.status(500).send({ error: e.toString() });
+  }
+});
+
+app.post('/match/start', async (req, res) => {
+  const { p1, p2, stake } = req.body;
+  if (!p1 || !p2 || !stake) return res.status(400).send({ error: 'p1,p2,stake required' });
+  try {
+    const tx = await play.createMatch(p1, p2, ethers.BigNumber.from(stake));
+    const receipt = await tx.wait();
+    res.send({ txHash: receipt.transactionHash });
+  } catch (e) {
+    res.status(500).send({ error: e.toString() });
+  }
+});
+
+app.post('/match/result', async (req, res) => {
+  const { matchId, winner } = req.body;
+  if (!matchId || !winner) return res.status(400).send({ error: 'matchId,winner required' });
+  try {
+    const tx = await play.commitResult(matchId, winner);
+    const receipt = await tx.wait();
+    res.send({ txHash: receipt.transactionHash });
+  } catch (e) {
+    res.status(500).send({ error: e.toString() });
+  }
+});
+
+app.listen(3000, () => console.log('Backend listening on 3000'));
