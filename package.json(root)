@@ -1,0 +1,22 @@
+ {
+  "name": "blockchain-game-repo",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "echo \"no tests\"",
+    "compile": "hardhat compile",
+    "deploy": "hardhat run scripts/deploy.js --network hardhat",
+    "start-backend": "node backend/index.js",
+    "leaderboard": "node tools/leaderboard.js"
+  },
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.2.0",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.17.0",
+    "@openzeppelin/contracts": "^4.9.2"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "dotenv": "^16.0.3",
+    "axios": "^1.4.0"
+  }
+}
