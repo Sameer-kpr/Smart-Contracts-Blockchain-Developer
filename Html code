@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Game Frontend</title>
+  </head>
+  <body>
+    <h1>Buy GT</h1>
+    <input id="usdt" placeholder="USDT amount (wei)" />
+    <button id="buy">Buy</button>
+
+    <h2>Create Match</h2>
+    <input id="p1" placeholder="player1 address" />
+    <input id="p2" placeholder="player2 address" />
+    <input id="stake" placeholder="stake (GT wei)" />
+    <button id="start">Create Match</button>
+
+    <h2>Submit Result</h2>
+    <input id="matchId" placeholder="matchId" />
+    <input id="winner" placeholder="winner address" />
+    <button id="result">Submit</button>
+
+    <pre id="out"></pre>
+
+    <script>
+      const API = 'http://localhost:3000';
+      document.getElementById('buy').onclick = async () => {
+        const amount = document.getElementById('usdt').value;
+        const r = await fetch(${API}/purchase?amount=${amount});
+        document.getElementById('out').innerText = await r.text();
+      }
+      document.getElementById('start').onclick = async () => {
+        const p1 = document.getElementById('p1').value;
+        const p2 = document.getElementById('p2').value;
+        const stake = document.getElementById('stake').value;
+        const r = await fetch(${API}/match/start, {
+          method: 'POST', body: JSON.stringify({ p1, p2, stake }), headers: { 'Content-Type': 'application/json' }
+        });
+        document.getElementById('out').innerText = await r.text();
+      }
+      document.getElementById('result').onclick = async () => {
+        const matchId = document.getElementById('matchId').value;
+        const winner = document.getElementById('winner').value;
+        const r = await fetch(${API}/match/result, {
+          method: 'POST', body: JSON.stringify({ matchId, winner }), headers: { 'Content-Type': 'application/json' }
+        });
+        document.getElementById('out').innerText = await r.text();
+      }
+    </script>
+  </body>
+</html>
