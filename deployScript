@@ -1,0 +1,38 @@
+ // scripts/deploy.js
+const hre = require("hardhat");
+
+async function main() {
+  const [deployer] = await hre.ethers.getSigners();
+  console.log("Deploying contracts with", deployer.address);
+
+  // Deploy a mock USDT (ERC20) for local testing
+  const ERC20Mock = await hre.ethers.getContractFactory("ERC20Mock");
+  const usdt = await ERC20Mock.deploy("USDT", "USDT");
+  await usdt.deployed();
+  console.log("USDT deployed to", usdt.address);
+
+  const GameToken = await hre.ethers.getContractFactory("GameToken");
+  const gtPerUsdt = hre.ethers.utils.parseUnits("1", 18); // 1 GT per 1 USDT
+  const gt = await GameToken.deploy("GameToken", "GT", gtPerUsdt);
+  await gt.deployed();
+  console.log("GameToken deployed to", gt.address);
+
+  const TokenStore = await hre.ethers.getContractFactory("TokenStore");
+  const store = await TokenStore.deploy(usdt.address, gt.address);
+  await store.deployed();
+  console.log("TokenStore deployed to", store.address);
+
+  // transfer ownership of GT to TokenStore so it can mint
+  await gt.transferOwnership(store.address);
+  console.log("Transferred GameToken ownership to TokenStore");
+
+  const PlayGame = await hre.ethers.getContractFactory("PlayGame");
+  const play = await PlayGame.deploy(gt.address);
+  await play.deployed();
+  console.log("PlayGame deployed to", play.address);
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
